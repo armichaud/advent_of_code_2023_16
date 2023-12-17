@@ -44,22 +44,23 @@ fn traverse(matrix: &DMatrix<char>, start: (i32, i32), direction: Direction) -> 
     let nrows = matrix.nrows() as i32;
     let ncols = matrix.ncols() as i32;
     while current.0 < nrows && current.0 > -1 && current.1 < ncols && current.1 > -1 {
+        println!("{:?}", current);
         set.insert(current);
         match matrix[(current.0 as usize, current.1 as usize)] {
             MIRROR_RIGHT => {
                 match direction {
                     Direction::Up => { current.1 += 1; direction = Direction::Right; },
                     Direction::Down => { current.1 -= 1; direction = Direction::Left; },
-                    Direction::Left => { current.0 -= 1; direction = Direction::Down; },
-                    Direction::Right => { current.0 += 1; direction = Direction::Up; },
+                    Direction::Left => { current.0 += 1; direction = Direction::Down; },
+                    Direction::Right => { current.0 -= 1; direction = Direction::Up; },
                 }
             }
             MIRROR_LEFT => {
                 match direction {
                     Direction::Up => { current.1 -= 1; direction = Direction::Left; },
                     Direction::Down => { current.1 += 1; direction = Direction::Right; },
-                    Direction::Left => { current.0 += 1; direction = Direction::Up; },
-                    Direction::Right => { current.0 -= 1; direction = Direction::Down; },
+                    Direction::Left => { current.0 -= 1; direction = Direction::Up; },
+                    Direction::Right => { current.0 += 1; direction = Direction::Down; },
                 }
             }
             SPLITTER_VERTICAL => {
@@ -85,9 +86,16 @@ fn traverse(matrix: &DMatrix<char>, start: (i32, i32), direction: Direction) -> 
             }
         }
     }
-    println!("{:?}", set);
     set
 }
+
+// fn display_energized(set: &HashSet<(i32, i32)>, nrows: usize, ncols: usize) {
+//     let mut matrix = DMatrix::from_element(nrows, ncols, '.');
+//     for (i, j) in set {
+//         matrix[(*i as usize, *j as usize)] = '#';
+//     }
+//     println!("{}", matrix);
+// }
 
 fn solution(filename: &str) -> usize {
     let matrix = build_matrix(filename);
@@ -96,5 +104,5 @@ fn solution(filename: &str) -> usize {
 
 fn main() {
     assert_eq!(solution("example.txt"), 46);
-    assert_eq!(solution("input.txt"), 0);
+    // assert_eq!(solution("input.txt"), 0);
 }
