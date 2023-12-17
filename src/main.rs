@@ -1,12 +1,14 @@
 use nalgebra::DMatrix;
-use std::{fs::File, io::{BufReader, BufRead}, collections::HashSet};
+use std::{fs::File, io::{BufReader, BufRead}, collections::{HashSet, HashMap}};
 
 const MIRROR_RIGHT: char = '/';
 const MIRROR_LEFT: char = '\\';
 const SPLITTER_VERTICAL: char = '|';
 const SPLITTER_HORIZONTAL: char = '-';
 
-#[derive(Debug, PartialEq, Eq)]
+type Visits = HashMap<(i32, i32), Vec<Direction>>;
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 enum Direction {
     Up,
     Down,
@@ -37,14 +39,19 @@ fn build_matrix(filename: &str) -> DMatrix<char> {
     DMatrix::from_row_slice(nrows, data.len() / nrows, &data)
 }
 
-fn traverse(matrix: &DMatrix<char>, start: (i32, i32), direction: Direction) -> HashSet<(i32, i32)> {
+fn traverse(matrix: &DMatrix<char>, start: (i32, i32), direction: Direction, visited: Option<&mut Visits>) -> HashSet<(i32, i32)> {
     let mut direction = direction;
     let mut set = HashSet::new();
+    let mut binding = HashMap::new();
+    let mut visited: &mut Visits = visited.unwrap_or(&mut binding);
     let mut current = start;
     let nrows = matrix.nrows() as i32;
     let ncols = matrix.ncols() as i32;
     while current.0 < nrows && current.0 > -1 && current.1 < ncols && current.1 > -1 {
-        println!("{:?}", current);
+        if visited.contains_key(&current) && visited[&current].contains(&direction) {
+            break;
+        }
+        visited.entry(current).or_insert(Vec::new()).push(direction.clone());
         set.insert(current);
         match matrix[(current.0 as usize, current.1 as usize)] {
             MIRROR_RIGHT => {
@@ -67,8 +74,8 @@ fn traverse(matrix: &DMatrix<char>, start: (i32, i32), direction: Direction) -> 
                 if direction == Direction::Up || direction == Direction::Down {
                     direction.travel_forward(&mut current);
                 } else {
-                    set.extend(traverse(matrix, (current.0 - 1, current.1), Direction::Up));
-                    set.extend(traverse(matrix, (current.0 + 1, current.1), Direction::Down));
+                    set.extend(traverse(matrix, (current.0 - 1, current.1), Direction::Up, Some(&mut visited)));
+                    set.extend(traverse(matrix, (current.0 + 1, current.1), Direction::Down, Some(&mut visited)));
                     break;
                 }
             }
@@ -76,8 +83,8 @@ fn traverse(matrix: &DMatrix<char>, start: (i32, i32), direction: Direction) -> 
                 if direction == Direction::Right || direction == Direction::Left {
                     direction.travel_forward(&mut current);
                 } else {
-                    set.extend(traverse(matrix, (current.0, current.1 - 1), Direction::Left));
-                    set.extend(traverse(matrix, (current.0, current.1 + 1), Direction::Right));
+                    set.extend(traverse(matrix, (current.0, current.1 - 1), Direction::Left, Some(&mut visited)));
+                    set.extend(traverse(matrix, (current.0, current.1 + 1), Direction::Right, Some(&mut visited)));
                     break;
                 }
             }
@@ -89,20 +96,12 @@ fn traverse(matrix: &DMatrix<char>, start: (i32, i32), direction: Direction) -> 
     set
 }
 
-// fn display_energized(set: &HashSet<(i32, i32)>, nrows: usize, ncols: usize) {
-//     let mut matrix = DMatrix::from_element(nrows, ncols, '.');
-//     for (i, j) in set {
-//         matrix[(*i as usize, *j as usize)] = '#';
-//     }
-//     println!("{}", matrix);
-// }
-
 fn solution(filename: &str) -> usize {
     let matrix = build_matrix(filename);
-    traverse(&matrix, (0, 0), Direction::Right).len()
+    traverse(&matrix, (0, 0), Direction::Right, None).len()
 }
 
 fn main() {
     assert_eq!(solution("example.txt"), 46);
-    // assert_eq!(solution("input.txt"), 0);
+    assert_eq!(solution("input.txt"), 0);
 }
