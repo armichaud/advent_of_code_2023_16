@@ -1,5 +1,5 @@
 use nalgebra::DMatrix;
-use std::{fs::File, io::{BufReader, BufRead}, collections::{HashSet, HashMap}};
+use std::{fs::File, io::{BufReader, BufRead}, collections::{HashSet, HashMap}, cmp::max};
 
 const MIRROR_RIGHT: char = '/';
 const MIRROR_LEFT: char = '\\';
@@ -101,7 +101,25 @@ fn solution(filename: &str) -> usize {
     traverse(&matrix, (0, 0), Direction::Right, None).len()
 }
 
+fn solution_2(filename: &str) -> usize { 
+    let matrix = build_matrix(filename);
+    let nrows = matrix.nrows() as i32;
+    let ncols = matrix.ncols() as i32;
+    let mut largest = 0;
+    for i in 0..nrows {
+        largest = max(traverse(&matrix, (i, 0), Direction::Right, None).len(), largest);
+        largest = max(traverse(&matrix, (i, ncols - 1), Direction::Left, None).len(), largest);
+    }
+    for i in 0..ncols {
+        largest = max(traverse(&matrix, (0, i), Direction::Down, None).len(), largest);
+        largest = max(traverse(&matrix, (nrows - 1, i), Direction::Up, None).len(), largest);
+    }
+    largest
+}
+
 fn main() {
     assert_eq!(solution("example.txt"), 46);
-    assert_eq!(solution("input.txt"), 0);
+    assert_eq!(solution("input.txt"), 6921);
+    assert_eq!(solution_2("example.txt"), 51);
+    assert_eq!(solution_2("input.txt"), 7594);
 }
